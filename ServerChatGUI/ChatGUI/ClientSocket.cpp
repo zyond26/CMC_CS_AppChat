@@ -46,15 +46,48 @@ bool ClientSocket::IsConnect() {
 }
 
 void ClientSocket::Disconnect() {
+    if (!isConnected) return;
+
     running = false;
     isConnected = false;
 
-    if (sock != INVALID_SOCKET) {
-        shutdown(sock, SD_BOTH);
-        closesocket(sock);
-        sock = INVALID_SOCKET;
+    SOCKET s = sock;
+    sock = INVALID_SOCKET;   // tránh thread access sock sau khi bị close
+
+    if (s != INVALID_SOCKET) {
+        shutdown(s, SD_BOTH);
+        closesocket(s);
+    }
+
+    // BẮT BUỘC join SAU khi socket đã close
+    if (recvThread.joinable()) {
+        recvThread.join();
     }
 }
+
+
+bool ClientSocket::RecvAll(char* buf, int len) {
+    int total = 0;
+    while (total < len) {
+        int ret = recv(sock, buf + total, len - total, 0);
+        if (ret == 0) return false;
+        if (ret < 0) {
+            int err = WSAGetLastError();
+
+            // Socket đã bị đóng từ thread khác
+            if (err == WSAENOTSOCK) return false;
+
+            if (err == WSAEWOULDBLOCK || err == WSAEINTR) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                continue;
+            }
+            return false;
+        }
+        total += ret;
+    }
+    return true;
+}
+
 
 bool ClientSocket::SendAll(const char* data, int size) {
     int sent = 0;
@@ -94,45 +127,17 @@ bool ClientSocket::Send(const void* data, int size) {
     return true;
 }
 
-bool ClientSocket::RecvAll(char* buf, int len) {
-    int total = 0;
-    while (total < len) {
-        int ret = recv(sock, buf + total, len - total, 0);
-        if (ret == 0) return false;
-        if (ret < 0) {
-            int err = WSAGetLastError();
-            if (err == WSAEWOULDBLOCK || err == WSAEINTR) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                continue;
-            }
-            return false;
-        }
-        total += ret;
-    }
-    return true;
-}
 void ClientSocket::StartRecvThread() {
-
     recvThread = std::thread([this]() {
-
-        while (running && isConnected) {
+        while (running) {
 
             int packetSize = 0;
-
-            if (!RecvAll((char*)&packetSize, 4)) {
-                OutputDebugStringA("ClientSocket: lost connection (prefix)\n");
-                break;
-            }
-
-            if (packetSize <= 0 || packetSize > 100000) {
-                OutputDebugStringA("ClientSocket: invalid size -> disconnect\n");
-                break;
-            }
+            if (!RecvAll((char*)&packetSize, 4)) break;
+            if (packetSize <= 0 || packetSize > 100000) break;
 
             char* data = new char[packetSize];
             if (!RecvAll(data, packetSize)) {
                 delete[] data;
-                OutputDebugStringA("ClientSocket: lost connection (payload)\n");
                 break;
             }
 
@@ -141,12 +146,11 @@ void ClientSocket::StartRecvThread() {
 
             delete[] data;
         }
-        isConnected = false;
-        running = false;
-        OutputDebugStringA("ClientSocket: Receive thread stopped\n");
 
+        OutputDebugStringA("ClientSocket: Receive thread stopped\n");
         });
 }
+
 
 void ClientSocket::SetCallback(void(*cb)(const char*, int)) {
     this->callback = cb;

@@ -52,29 +52,18 @@ bool UserManager::AddUser(const std::wstring& username, SOCKET socket) {
 
 bool UserManager::RemoveUser(const std::wstring& username) {
     std::lock_guard<std::mutex> lock(usersMutex);
-
     auto it = onlineUsers.find(username);
-    if (it == onlineUsers.end()) {
-        char debugMsg[256];
-        sprintf_s(debugMsg, "UserManager: Cannot remove %ls - not found\n", username.c_str());
-        OutputDebugStringA(debugMsg);
-        return false;
-    }
-
-    SOCKET s = it->second.socket;
-    if (s != INVALID_SOCKET) {
-        shutdown(s, SD_BOTH);
-        closesocket(s);
-    }
+    if (it == onlineUsers.end()) return false;
 
     onlineUsers.erase(it);
 
     char debugMsg[256];
-    sprintf_s(debugMsg, "UserManager: User %ls removed. Remaining: %zu\n",
-        username.c_str(), onlineUsers.size());
+    sprintf_s(debugMsg, "UserManager: User %ls removed\n", username.c_str());
     OutputDebugStringA(debugMsg);
+
     return true;
 }
+
 
 bool UserManager::RemoveUserBySocket(SOCKET socket) {
     std::lock_guard<std::mutex> lock(usersMutex);

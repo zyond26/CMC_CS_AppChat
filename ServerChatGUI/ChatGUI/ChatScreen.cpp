@@ -17,7 +17,6 @@ ChatScreen::ChatScreen(CWnd* pParent) : CDialogEx(IDD_DIALOG_ChatScreen, pParent
     g_currentChatScreen = this;
     m_currentChatWith = L"";
 }
-
 ChatScreen::~ChatScreen() {
     g_currentChatScreen = nullptr;
 }

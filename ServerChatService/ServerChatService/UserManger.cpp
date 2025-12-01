@@ -153,12 +153,12 @@ void UserManager::Broadcast(const char* data, int size, const std::wstring& excl
 }
 
 std::vector<std::wstring> UserManager::GetOnlineUsernames() {
-    std::vector<std::wstring> ret;
+    std::vector<std::wstring> on;
     std::lock_guard<std::mutex> lock(usersMutex);
     for (const auto& p : onlineUsers) {
         if (p.second.isOnline)
-            ret.push_back(p.first);
+            on.push_back(p.first);
     }
-    return ret;
+    return on;
 }
 

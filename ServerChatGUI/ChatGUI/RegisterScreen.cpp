@@ -32,8 +32,7 @@ END_MESSAGE_MAP()
 BOOL RegisterScreen::OnInitDialog() {
     CDialogEx::OnInitDialog();
 
-    OutputDebugStringA("RegisterScreen: Dialog initialized\n");
-
+    g_socket.SetCallback(GlobalPacketHandler);
     return TRUE;
 }
 
@@ -90,7 +89,7 @@ void RegisterScreen::OnBnClickedButtonregister() {
 
 LRESULT RegisterScreen::OnRegisterSuccess(WPARAM wParam, LPARAM lParam)
 {
-    AfxMessageBox(L"Đăng ký thành công!\nBạn có thể đăng nhập ngay bây giờ.");
+    MessageBox(L"Đăng ký thành công!\nBạn có thể đăng nhập ngay bây giờ.");
     this->ShowWindow(SW_HIDE);
 
     PacketRegisterResult* p = (PacketRegisterResult*)wParam;
@@ -108,11 +107,11 @@ LRESULT RegisterScreen::OnRegisterFailure(WPARAM wParam, LPARAM lParam)
 
     if (p && p->msg[0] != L'\0')
     {
-        AfxMessageBox(p->msg, MB_ICONERROR);
+        MessageBox(p->msg);
     }
     else
     {
-        AfxMessageBox(L"Đăng ký thất bại! Vui lòng thử lại.", MB_ICONERROR);
+        MessageBox(L"Đăng ký thất bại! Vui lòng thử lại.");
     }
 
     if (p) delete p; 

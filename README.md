@@ -9,7 +9,6 @@ Dự án được phát triển bằng C++, WinSock2, và MFC (giao diện Windo
 Tính năng chính
 🔹 Client
 - Đăng ký / Đăng nhập tài khoản.
-- Ha
 - Hiển thị đầy đủ danh sách người dùng trong giao diện chat
 - Chat 1–1 (broadcast).
 - Hiển thị đầy đủ lịch sử người dùng

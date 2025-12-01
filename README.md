@@ -1,4 +1,4 @@
-# ChatApp – Ứng dụng Chat Realtime Client/Server (C++ WinSock, MFC)
+# ChatApp – Ứng dụng Chat Client/Server (C++ WinSock, MFC)
 
 [![C++](https://img.shields.io/badge/Language-C++17-blue)](https://isocpp.org/) 
 [![Windows](https://img.shields.io/badge/Platform-Windows-green)](https://www.microsoft.com/windows)
